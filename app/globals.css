@@ -1,0 +1,351 @@
+@import "tailwindcss";
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Theme — dark, data-center professional. Deep-navy surfaces with restrained
+   neon-cyan accents. Tweak the colors here to re-skin the whole site.
+   ────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+
+  /* Surface / text — deep navy instead of pure black: reads as a dark
+     control-room console rather than a game UI. */
+  --color-canvas: #070b14; /* content sheet */
+  --color-surface: #0d1626; /* cards — one step lifted off the sheet */
+  --color-ink: #e6f1ff; /* primary text — near white */
+  --color-muted: #93a7bd; /* secondary text — blue-grey */
+  --color-line: rgba(34, 211, 238, 0.22); /* neon-tinted borders, kept quiet */
+
+  /* Accent — neon cyan */
+  --color-accent: #22d3ee; /* links, eyebrows, icons, glow */
+  --color-accent-soft: rgba(34, 211, 238, 0.12); /* chip / tag backgrounds */
+  --color-accent-strong: #67e8f9; /* bright cyan text on accent-soft */
+  --color-heading: #14b8a6; /* section headings — teal */
+
+  /* Magic UI — ShimmerButton animations */
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+}
+
+@keyframes shimmer-slide {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+  }
+}
+@keyframes spin-around {
+  0% {
+    transform: translateZ(0) rotate(0);
+  }
+  15%,
+  35% {
+    transform: translateZ(0) rotate(90deg);
+  }
+  65%,
+  85% {
+    transform: translateZ(0) rotate(270deg);
+  }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+  }
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
+  font-size: 16.5px;
+}
+
+body {
+  background-color: #03050a; /* near-black stage behind the centered sheet */
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible keyboard focus for links, buttons (incl. the clickable cards) */
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2.5px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Gradient text, keyed to purpose -------------------------------------------- */
+.text-grad-name,
+.text-grad-role,
+.text-grad-heading {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-repeat: no-repeat;
+}
+/* Identity — your name: white → cyan, with a soft neon glow */
+.text-grad-name {
+  background-image: linear-gradient(100deg, #ffffff 0%, #a5f3fc 55%, #22d3ee 100%);
+  filter: drop-shadow(0 0 14px rgba(34, 211, 238, 0.3));
+}
+/* Role line under the name: cyan */
+.text-grad-role {
+  background-image: linear-gradient(90deg, #22d3ee 0%, #67e8f9 100%);
+}
+/* Section headers: teal → cyan */
+.text-grad-heading {
+  background-image: linear-gradient(90deg, #14b8a6 0%, #22d3ee 100%);
+}
+
+/* ── Animated electric-circuit backdrop ─────────────────────────────────── */
+.circuit-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(8, 47, 73, 0.28) 0%, transparent 50%),
+    #03050a;
+  overflow: hidden;
+}
+/* The backdrop only shows in the margins on wide screens; on smaller screens
+   the page sheet covers it, so skip rendering/animating it entirely. */
+@media (max-width: 1024px) {
+  .circuit-bg {
+    display: none;
+  }
+}
+.circuit-svg {
+  width: 100%;
+  height: 100%;
+}
+.circuit-wire {
+  fill: none;
+  stroke: rgba(34, 211, 238, 0.62);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.5));
+}
+.circuit-pulse {
+  fill: none;
+  stroke: #a5f3fc;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 36 1390;
+  /* No drop-shadow here: this element animates every frame, so a filter would
+     be re-rasterized continuously. The bright stroke alone reads as a pulse. */
+  animation: circuitFlow linear infinite;
+}
+.circuit-node {
+  fill: #a5f3fc;
+  /* Glow removed for the same reason — nodes animate opacity each frame. */
+  animation: circuitGlow ease-in-out infinite;
+}
+.rack-frame {
+  fill: rgba(6, 12, 22, 0.92);
+  stroke: rgba(34, 211, 238, 0.5);
+  stroke-width: 1.5;
+}
+.rack-unit {
+  fill: rgba(34, 211, 238, 0.05);
+  stroke: rgba(34, 211, 238, 0.32);
+  stroke-width: 1;
+}
+.rack-vent {
+  stroke: rgba(34, 211, 238, 0.3);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 5;
+}
+.rack-led {
+  /* no per-LED glow filter — bright fill + opacity blink reads as an LED and
+     is far cheaper to animate across dozens of elements. */
+  animation-name: circuitGlow;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes circuitFlow {
+  to {
+    stroke-dashoffset: -1426;
+  }
+}
+@keyframes circuitGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .circuit-pulse,
+  .circuit-node,
+  .rack-led {
+    animation: none;
+  }
+}
+
+/* Subtle, slim scrollbar for the fixed-height card panels */
+.scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.25) transparent;
+  scroll-behavior: smooth;
+}
+.scroll-soft::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-soft::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scroll-soft:hover::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.35);
+  background-clip: padding-box;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Blueprint grid backdrop for the hero */
+.grid-backdrop {
+  background-image:
+    linear-gradient(to right, rgba(34, 211, 238, 0.5) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 211, 238, 0.5) 1px, transparent 1px);
+  background-size: 30px 30px;
+  /* Brightest at the center, falling off (darker) toward the edges. */
+  -webkit-mask-image: radial-gradient(ellipse 60% 130% at 50% 50%, #000 0%, #000 15%, rgba(0, 0, 0, 0.08) 100%);
+  mask-image: radial-gradient(ellipse 60% 130% at 50% 50%, #000 0%, #000 15%, rgba(0, 0, 0, 0.08) 100%);
+}
+
+/* Article typography */
+.prose-content {
+  line-height: 1.75;
+  color: var(--color-ink);
+}
+.prose-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.prose-content h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-content p {
+  margin-bottom: 1rem;
+}
+.prose-content ul,
+.prose-content ol {
+  margin: 0 0 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.prose-content ul {
+  list-style: disc;
+}
+.prose-content ol {
+  list-style: decimal;
+}
+.prose-content a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-content blockquote {
+  border-left: 3px solid var(--color-accent);
+  padding-left: 1rem;
+  color: var(--color-muted);
+  font-style: italic;
+  margin: 1.25rem 0;
+}
+.prose-content code {
+  background: var(--color-accent-soft);
+  color: var(--color-accent-strong);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+}
+.prose-content pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+.prose-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* ── Print / Save-as-PDF: clean light one-column resume ─────────────────────
+   The whole site is themed through the tokens above, so printing re-skins by
+   overriding them; glows, animations, and backdrops are stripped. */
+@media print {
+  @page {
+    margin: 1.4cm;
+  }
+  :root {
+    --color-canvas: #ffffff;
+    --color-surface: #ffffff;
+    --color-ink: #111827;
+    --color-muted: #374151;
+    --color-line: #d1d5db;
+    --color-accent: #0e7490;
+    --color-accent-soft: #f1f5f9;
+    --color-accent-strong: #155e75;
+    --color-heading: #0f766e;
+  }
+  html {
+    font-size: 12px;
+  }
+  body {
+    background: #ffffff !important;
+    color: var(--color-ink);
+  }
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .circuit-bg,
+  .grid-backdrop {
+    display: none !important;
+  }
+  .text-grad-name,
+  .text-grad-role,
+  .text-grad-heading {
+    background-image: none;
+    color: var(--color-ink);
+    filter: none;
+  }
+  .text-grad-role,
+  .text-grad-heading {
+    color: var(--color-accent-strong);
+  }
+  a {
+    color: inherit;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid-page;
+  }
+}
